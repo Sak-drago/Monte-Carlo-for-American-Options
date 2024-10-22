@@ -6,13 +6,13 @@
 #include <algorithm> // for max
 #include <string>
 #include <sstream>
+#include <numeric>   // for accumulate
 
 double callOptionPayOff(double S, double K);
 double putOptionPayOff(double S, double K);
 double mcAmericanOptionPricing(double S_0, double K, double r, double sigma, double T, int32_t nSimulations, int nTimeSteps, bool isCallOption);
 double randomGaussian(double mean, double sigma);
-double convertTime(std::string &expiry, double c_m, double c_y);
-double leastSquaresRegression(const std::vector<double>& X, const std::vector<double>& Y);
+double convertTime(std::string &expiry);
 
 // Gaussian random number generator
 double randomGaussian(double mean, double sigma) {
@@ -48,25 +48,20 @@ double leastSquaresRegression(const std::vector<double>& X, const std::vector<do
     return intercept;
 }
 
-double convertTime(std::string &expiry, double c_m, double c_y) {
+double convertTime(std::string &expiry, int c_m, int c_y){
     int year, month;
     std::stringstream ss(expiry);
     std::string placeholder_m, placeholder_y;
 
-    std::getline(ss, placeholder_y, '-');
-    std::getline(ss, placeholder_m, '-');
-
+    std::getline(ss,placeholder_y,'-');
+    std::getline(ss,placeholder_m,'-');
+    
     year = std::stoi(placeholder_y);
     month = std::stoi(placeholder_m);
+    if(month-c_m>0 && year == c_y) return double((month-c_m)/10);
+    else if(month-c_m<0 && year == c_y+1) return double((month-c_m)/10);
+    else return year-c_y;
 
-    double time_in_years = 0.0;
-    if (year == c_y) {
-        time_in_years = (month - c_m) / 12.0;  // remaining months in the same year
-    } else if (year > c_y) {
-        time_in_years = (12 - c_m + month) / 12.0; // carry over to the next year
-    }
-
-    return time_in_years;
 }
 
 // Monte Carlo for American Option pricing using LSMC
@@ -127,25 +122,24 @@ double mcAmericanOptionPricing(double S_0, double K, double r, double sigma, dou
 }
 
 int main(int argc, char* argv[]) {
-  if(argc != 6){
+    if(argc != 0){
     std::cerr << "Error: " << argv[0] << " <Last Price><Strike><Volatility><Interest Rate><Expiry>\n";
     return -1;
   }
     double S_0 = std::atof(argv[1]);   // Stock price at time 0
     double K = std::atof(argv[2]);     // Strike price
     double r = std::atof(argv[4]);      // Risk-free rate
-    double sigma = std::atof(argv[3]);   // Volatility
-    std::string expiry = argv[5];
-    double T = convertTime(expiry,10.0,2024.0);       // Time to maturity (1 year)
+    double sigma = std::atoi(argv[3]);   // Volatility
+    double T = convertTime(argv[5]);       // Time to maturity (1 year)
     int32_t nSimulations = 100000; // Number of simulations
     int nTimeSteps = 100; // Number of time steps
 
     double callOptionPrice = mcAmericanOptionPricing(S_0, K, r, sigma, T, nSimulations, nTimeSteps, true);
     double putOptionPrice = mcAmericanOptionPricing(S_0, K, r, sigma, T, nSimulations, nTimeSteps, false);
 
-    std::cout << "American Call Option Price: " << callOptionPrice << '\n';
-    std::cout << "American Put Option Price: " << putOptionPrice << '\n';
-    std::cout << "====================================================\n";;
+    std::cout << "American Call Option Price: " << callOptionPrice << std::endl;
+    std::cout << "American Put Option Price: " << putOptionPrice << std::endl;
+    std::cout << "====================================================\n" << std::endl;
     return 0;
 }
 
