@@ -1,5 +1,7 @@
 #!/bin/bash
 
+./python3 api_call.py
+
 csv_file="AAPL_options_data.csv"  # Change name depending on the stock
 
 # Extract relevant fields from the CSV
@@ -9,8 +11,7 @@ strike=$(awk -F, 'NR==2 {gsub(/"/,""); print $3}' $csv_file)            # Extrac
 volatility=$(awk -F, 'NR==2 {gsub(/"/,""); print $11}' $csv_file)        # Extract implied volatility
 expiry=$(awk -F, 'NR==2 {gsub(/"/,""); print $15}' $csv_file)           # Extract expiration date
 
-# Assuming the interest rate is fixed or predefined (set to 0.05 or 5% as an example)
-interest_rate=0.05
+interest_rate=0.05 #Set it on your own. Use websites or search engines to find one
 
 # Log extracted data for verification
 echo "Contract Symbol: $symbol"
